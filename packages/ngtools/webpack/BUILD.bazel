@@ -6,6 +6,7 @@
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 load("//tools:defaults.bzl", "pkg_npm", "ts_library")
 load("@npm//@angular/dev-infra-private/bazel/api-golden:index.bzl", "api_golden_test_npm_package")
+load("//tools:toolchain_info.bzl", "TOOLCHAINS_NAMES", "TOOLCHAINS_VERSIONS")
 
 licenses(["notice"])  # MIT
 
@@ -57,15 +58,22 @@ ts_library(
     ],
 )
 
-jasmine_node_test(
-    name = "webpack_test",
-    srcs = [":webpack_test_lib"],
-    deps = [
-        "@npm//jasmine",
-        "@npm//source-map",
-        "@npm//tslib",
-    ],
-)
+[
+    jasmine_node_test(
+        name = "webpack_test_" + toolchain_name,
+        srcs = [":webpack_test_lib"],
+        toolchain = toolchain,
+        deps = [
+            "@npm//jasmine",
+            "@npm//source-map",
+            "@npm//tslib",
+        ],
+    )
+    for toolchain_name, toolchain in zip(
+        TOOLCHAINS_NAMES,
+        TOOLCHAINS_VERSIONS,
+    )
+]
 
 genrule(
     name = "license",
@@ -84,7 +92,7 @@ pkg_npm(
 )
 
 api_golden_test_npm_package(
-    name = "ngtools_webpack_api",
+    name = "ngtools_webpack",
     data = [
         ":npm_package",
         "//goldens:public-api",
