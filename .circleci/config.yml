@@ -263,7 +263,7 @@ jobs:
 
   test:
     executor: test-executor
-    resource_class: xlarge
+    resource_class: 2xlarge
     steps:
       - custom_attach_workspace
       - browser-tools/install-chrome

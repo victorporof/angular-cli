@@ -56,6 +56,19 @@ export type DevServerBuilderOutput = DevServerBuildOutput & {
   baseUrl: string;
 };
 
+export async function _defaultOptions(
+  options: DevServerBuilderOptions,
+): Promise<DevServerBuilderOptions & { port: number; host: string }> {
+  const host = options.host || 'localhost';
+  const port = await checkPort(options.port ?? 4200, host);
+
+  return {
+    port,
+    host,
+    ...options,
+  };
+}
+
 /**
  * Reusable implementation of the Angular Webpack development server builder.
  * @param options Dev Server options.
@@ -79,7 +92,7 @@ export function serveWebpackBrowser(
   const { logger, workspaceRoot } = context;
   assertCompatibleAngularVersion(workspaceRoot);
 
-  const browserTarget = targetFromTargetString(options.browserTarget);
+  const initialOptions = options;
 
   async function setup(): Promise<{
     browserOptions: BrowserBuilderSchema;
@@ -91,10 +104,12 @@ export function serveWebpackBrowser(
       throw new Error('The builder requires a target.');
     }
 
+    const options = await _defaultOptions(initialOptions);
+
+    const browserTarget = targetFromTargetString(options.browserTarget);
+
     // Purge old build disk cache.
     await purgeStaleBuildCache(context);
-
-    options.port = await checkPort(options.port ?? 4200, options.host || 'localhost');
 
     if (options.hmr) {
       logger.warn(tags.stripIndents`NOTICE: Hot Module Replacement (HMR) is enabled for the dev server.
@@ -103,7 +118,6 @@ export function serveWebpackBrowser(
 
     if (
       !options.disableHostCheck &&
-      options.host &&
       !/^127\.\d+\.\d+\.\d+/g.test(options.host) &&
       options.host !== 'localhost'
     ) {

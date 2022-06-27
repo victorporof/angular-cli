@@ -7,7 +7,7 @@
  */
 
 import { URL } from 'url';
-import { serveWebpackBrowser } from '../../index';
+import { _defaultOptions, serveWebpackBrowser } from '../../index';
 import { executeOnceAndFetch } from '../execute-fetch';
 import {
   BASE_OPTIONS,
@@ -40,23 +40,9 @@ describeBuilder(serveWebpackBrowser, DEV_SERVER_BUILDER_INFO, (harness) => {
     });
 
     it('uses default port (4200) when not present', async () => {
-      harness.useTarget('serve', {
-        ...BASE_OPTIONS,
-        // Base options set port to zero
-        port: undefined,
-      });
+      const result = await _defaultOptions({ browserTarget: 'test:build' });
 
-      const { result, response, logs } = await executeOnceAndFetch(harness, '/');
-
-      expect(result?.success).toBeTrue();
-      expect(getResultPort(result)).toBe('4200');
-      expect(await response?.text()).toContain('<title>');
-
-      expect(logs).toContain(
-        jasmine.objectContaining({
-          message: jasmine.stringMatching(/:4200/),
-        }),
-      );
+      expect(result.port).toBe(4200);
     });
 
     it('uses a random free port when set to 0 (zero)', async () => {
